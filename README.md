@@ -60,14 +60,6 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npm run ios
 3. **One patient, no auth.** The sample data has one — `pt_demo_001`, Sophia
    Alvarez.
 4. **Flowers are emoji**, which the brief explicitly allows.
-5. **The bottom bar departs from the brief's wording in two places.** The brief
-   describes Farm as "larger, raised and centred" and Jano as sitting "around
-   the Jano logo". Here all four circles are the same size and only the fill
-   changes, because resizing on tap made the row jump under the finger; Me and
-   Jano are the raised pair, matching the reference screens; and the wordmark
-   is omitted. The non-standard positions the interaction is really about —
-   Me bottom-left, Farm and Temple paired in the middle, Jano bottom-right —
-   are unchanged.
 5. **No signature on the QR.** See "What is inside the QR code" below.
 6. **Timestamps are epoch milliseconds, never `Date` objects.** State is
    persisted as JSON, and a `Date` comes back out of `JSON.parse` as a string.
@@ -78,11 +70,6 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npm run ios
    so a reviewer is never unsure which side they are looking at. It starts on
    the booth the waiting pass was issued for, and warns you when a booth you
    pick yourself will refuse the scan.
-9. **Check-in opens two hours before the slot**, where a real booth would use
-   about fifteen minutes. The prototype cannot travel in time, so a tight
-   window would make the flow impossible to demonstrate without waiting. The
-   rule is unchanged and still tested from both sides — see
-   `CHECK_IN_LEAD_MS` in [`src/core/visitMachine.ts`](src/core/visitMachine.ts).
 
 ## The two questions
 
