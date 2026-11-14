@@ -209,6 +209,10 @@ suite, `describe(unit) > describe(method) > describe(category)`, security cases
 first, `should successfully` / `should fail` naming, and Arrange/Act/Assert in
 every body.
 
+They were checked by breaking the code on purpose: reverting `rangeStatus.ts`
+to the original turns 10 of its 16 tests red, and disabling the wrong-booth
+check in `verifyPass` turns 3 more red across the pass and check-in suites.
+
 Three things keep them honest:
 
 - **Assert the specific error code**, never just "it rejected". Half of these
