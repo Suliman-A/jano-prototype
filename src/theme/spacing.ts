@@ -18,7 +18,7 @@ export const layout = {
   /** Horizontal padding on every screen. */
   screenPadding: 20,
   /** How much vertical room the custom tab bar needs. */
-  tabBarHeight: 120,
+  tabBarHeight: 148,
   /** Diameter of every tab button. They are all the same size. */
   tabButtonSize: 74,
 } as const;

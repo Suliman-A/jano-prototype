@@ -4,7 +4,8 @@
  * Four circular tabs, not a row of equal ones: Me at the left and Jano at the
  * right sit a little higher than Farm and Temple in the middle. The active tab
  * is filled. Every circle is the same size whatever its state, so tapping a
- * tab never resizes anything and the row never shifts.
+ * tab never resizes anything and the row never shifts. The Jano wordmark sits
+ * centred above the row, as the reference screens show.
  *
  * Tapping Me does not navigate — it opens the Me menu over the current screen.
  */
@@ -149,6 +150,13 @@ export const JanoTabBar = ({
       style={[styles.bar, { paddingBottom: insets.bottom || spacing.sm }]}
       testID="jano-tab-bar"
     >
+      <Text
+        color="brand"
+        style={styles.wordmark}
+        text="Jano"
+        variant="sectionTitle"
+      />
+
       <View style={styles.row}>
         <TabButton
           isActive={isMeActive}
@@ -205,6 +213,11 @@ const styles = StyleSheet.create({
   lifted: {
     // Me and Jano sit a little above the two middle tabs.
     marginBottom: spacing.xl,
+  },
+  wordmark: {
+    letterSpacing: 0.5,
+    marginBottom: spacing.xxs,
+    textAlign: 'center',
   },
   row: {
     alignItems: 'flex-end',
