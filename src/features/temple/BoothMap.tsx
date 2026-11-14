@@ -41,7 +41,9 @@ export const BoothMap = ({ booths }: BoothMapProps): React.JSX.Element => {
   };
 
   return (
-    <View style={styles.root} testID="booth-map">
+    // The map is illustrative: it never takes gestures, so the pins always
+    // stay in frame and dragging over it scrolls the page instead.
+    <View pointerEvents="none" style={styles.root} testID="booth-map">
       {Platform.OS === 'ios' ? (
         <AppleMaps.View
           cameraPosition={camera}
