@@ -74,7 +74,7 @@ const TabButton = ({
       testID={`tab-${routeName}`}
     >
       <Icon
-        color={isActive ? 'onBrand' : 'brand'}
+        color={isActive ? 'onBrand' : 'ink'}
         name={ICONS[routeName]}
         size={22}
       />
