@@ -19,22 +19,23 @@ new readings appear on the Farm.
 
 ## Running it
 
-Requires Xcode and the iOS simulator. This is a native Expo app, so there is no
-hosted link.
-
 ```bash
 npm install
-npx expo prebuild --platform ios
+```
+
+```bash
 npm run ios
 ```
 
-If CocoaPods fails with `Unicode Normalization not appropriate for ASCII-8BIT`,
-that is a CocoaPods bug under some Ruby builds, not a dependency problem. Run
-it once with a UTF-8 locale and build again:
-
 ```bash
-cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install && cd ..
+npm run android
 ```
+
+The native projects are generated, not committed: there is no `ios/` or
+`android/` folder in this repo, and nothing here edits native code. `npm run
+ios` generates what it needs and builds, so you never run `prebuild`,
+`pod install` or anything in Xcode yourself. The trade-off is that a simulator
+or emulator is required; this is a native app, so there is no hosted link.
 
 ### Tests
 
@@ -43,6 +44,20 @@ npm test
 ```
 
 Also `npm run tscheck` for types.
+
+<details>
+<summary>If the iOS build fails inside CocoaPods</summary>
+
+On some Ruby builds CocoaPods crashes with `Unicode Normalization not
+appropriate for ASCII-8BIT`. That is a bug in CocoaPods' own error reporter,
+not a problem with this project's dependencies, and it hides the real message.
+Re-running the build under a UTF-8 locale gets past it:
+
+```bash
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npm run ios
+```
+
+</details>
 
 ## Walking the demo
 
