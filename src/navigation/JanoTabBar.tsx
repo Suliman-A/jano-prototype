@@ -123,7 +123,7 @@ export const JanoTabBar = ({
       <Text color="brand" style={styles.wordmark} text="Jano" variant="title" />
 
       <TabButton
-        isActive={meMenu.isOpen}
+        isActive={meMenu.isOpen || activeRouteName === 'MeTab'}
         onPress={() => meMenu.toggle()}
         routeName="MeTab"
       />
@@ -180,8 +180,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   wordmark: {
+    left: 0,
     position: 'absolute',
-    alignSelf: 'center',
-    top: spacing.xxs,
+    right: 0,
+    textAlign: 'center',
+    top: spacing.xs,
   },
 });

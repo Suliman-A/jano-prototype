@@ -62,7 +62,7 @@ export const MeMenu = (): React.JSX.Element | null => {
     <Animated.View
       entering={FadeIn.duration(140)}
       exiting={FadeOut.duration(120)}
-      style={StyleSheet.absoluteFill}
+      style={[styles.root, { bottom: layout.tabBarHeight + insets.bottom }]}
       testID="me-menu"
     >
       <Pressable
@@ -72,12 +72,7 @@ export const MeMenu = (): React.JSX.Element | null => {
         style={[StyleSheet.absoluteFill, styles.scrim]}
       />
 
-      <View
-        style={[
-          styles.items,
-          { bottom: layout.tabBarHeight + insets.bottom + spacing.md },
-        ]}
-      >
+      <View style={styles.items}>
         {ITEMS.map((item, index) => (
           <Animated.View
             entering={FadeInDown.delay(index * STAGGER_MS).duration(220)}
@@ -117,10 +112,17 @@ const styles = StyleSheet.create({
     width: 48,
   },
   items: {
+    bottom: spacing.md,
     gap: spacing.sm,
     left: spacing.lg,
     position: 'absolute',
     right: spacing.lg,
+  },
+  root: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   label: {
     flex: 1,
