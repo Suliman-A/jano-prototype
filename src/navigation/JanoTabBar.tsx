@@ -128,7 +128,10 @@ export const JanoTabBar = ({
 
   return (
     <View
-      style={[styles.bar, { paddingBottom: insets.bottom || spacing.sm }]}
+      style={[
+        styles.bar,
+        { paddingBottom: (insets.bottom || spacing.sm) + spacing.md },
+      ]}
       testID="jano-tab-bar"
     >
       <View style={styles.row}>
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
   centre: {
     alignItems: 'flex-end',
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.lg,
   },
   label: {
     textAlign: 'center',
