@@ -82,30 +82,31 @@ In two places, deliberately.
 [`src/core/pass.ts:48`](src/core/pass.ts#L48). A booth on poor mobile data can
 still refuse a pass without reaching a server:
 
-| Reason | Where |
-|---|---|
+| Reason                                                                       | Where                                                                                                                     |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `PASS_MALFORMED` — not a Jano pass, truncated, or an empty/non-numeric field | `decodePass`, [`src/core/pass.ts:52`](src/core/pass.ts#L52), [`:59`](src/core/pass.ts#L59), [`:69`](src/core/pass.ts#L69) |
-| `PASS_BAD_VERSION` — a format this booth does not understand | `decodePass`, [`src/core/pass.ts:63`](src/core/pass.ts#L63) |
-| `PASS_EXPIRED` — past the end of its slot | `verifyPass`, [`src/core/pass.ts:106`](src/core/pass.ts#L106) |
-| `PASS_WRONG_BOOTH` — issued for a different Temple | `verifyPass`, [`src/core/pass.ts:114`](src/core/pass.ts#L114) |
+| `PASS_BAD_VERSION` — a format this booth does not understand                 | `decodePass`, [`src/core/pass.ts:63`](src/core/pass.ts#L63)                                                               |
+| `PASS_EXPIRED` — past the end of its slot                                    | `verifyPass`, [`src/core/pass.ts:106`](src/core/pass.ts#L106)                                                             |
+| `PASS_WRONG_BOOTH` — issued for a different Temple                           | `verifyPass`, [`src/core/pass.ts:114`](src/core/pass.ts#L114)                                                             |
 
 **Against the store** — `checkIn`,
-[`src/api/mock/backend.ts:208`](src/api/mock/backend.ts#L208):
+[`src/api/mock/backend.ts:207`](src/api/mock/backend.ts#L207):
 
-| Reason | Where |
-|---|---|
-| `PASS_UNKNOWN` — no such pass on record | [`src/api/mock/backend.ts:228`](src/api/mock/backend.ts#L228) |
-| `PASS_USED` — scanned once already | [`src/api/mock/backend.ts:235`](src/api/mock/backend.ts#L235) |
-| `PASS_WRONG_PATIENT` — the code names someone other than the booking | [`src/api/mock/backend.ts:245`](src/api/mock/backend.ts#L245) |
-| `BOOTH_UNAVAILABLE` — the booth is in maintenance | [`src/api/mock/backend.ts:258`](src/api/mock/backend.ts#L258) |
-| `ILLEGAL_TRANSITION`, `CHECK_IN_WINDOW_CLOSED` — the visit itself refuses | `applyVisitEvent`, [`src/core/visitMachine.ts:77`](src/core/visitMachine.ts#L77) ([`:85`](src/core/visitMachine.ts#L85), [`:105`](src/core/visitMachine.ts#L105)) |
+| Reason                                                                   | Where                                                                                                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `PASS_UNKNOWN` — no such pass on record                                  | [`src/api/mock/backend.ts:227`](src/api/mock/backend.ts#L227)                                                            |
+| `PASS_USED` — scanned once already                                       | [`src/api/mock/backend.ts:234`](src/api/mock/backend.ts#L234)                                                            |
+| `PASS_WRONG_PATIENT` — the code names someone other than the booking     | [`src/api/mock/backend.ts:244`](src/api/mock/backend.ts#L244)                                                            |
+| `BOOTH_UNAVAILABLE` — the booth is in maintenance                        | [`src/api/mock/backend.ts:257`](src/api/mock/backend.ts#L257)                                                            |
+| `ILLEGAL_TRANSITION` — the visit is not in a status that allows check-in | `applyVisitEvent`, [`src/core/visitMachine.ts:50`](src/core/visitMachine.ts#L50) ([`:58`](src/core/visitMachine.ts#L58)) |
+| `PASS_WRONG_BOOTH` again, from the visit itself                          | `applyVisitEvent`, [`src/core/visitMachine.ts:67`](src/core/visitMachine.ts#L67)                                         |
 
 Every code is in `JanoErrorCode`, [`src/core/errors.ts:9`](src/core/errors.ts#L9).
 
 **The order matters, and is tested.** The booth check runs before any store
 lookup, so a wrong-booth scan is refused offline. The already-used check runs
-before the state machine, so a second scan reports *already used* rather than
-*illegal transition* — both refuse the scan, but only one tells the patient
+before the state machine, so a second scan reports _already used_ rather than
+_illegal transition_ — both refuse the scan, but only one tells the patient
 something true. See
 [`src/api/__tests__/checkIn.test.ts`](src/api/__tests__/checkIn.test.ts), "should
 fail as already-used rather than illegal-transition on a re-scan".
@@ -113,7 +114,7 @@ fail as already-used rather than illegal-transition on a re-scan".
 ### 2. What is inside the QR code, and why?
 
 A readable, dot-separated string. The fields are `PassPayload`,
-[`src/core/types.ts:103`](src/core/types.ts#L103); the grammar is documented at
+[`src/core/types.ts:100`](src/core/types.ts#L100); the grammar is documented at
 [`src/core/pass.ts:8`](src/core/pass.ts#L8) and built by `encodePass`,
 [`src/core/pass.ts:28`](src/core/pass.ts#L28):
 
@@ -121,15 +122,15 @@ A readable, dot-separated string. The fields are `PassPayload`,
 jano.1.bkg_7fa2.bth_ayala.pt_demo_001.jti_4d9c1e.1763131200000
 ```
 
-| Field | Why it is there |
-|---|---|
-| `jano` | a scanner can tell this is a Jano pass at all |
-| `1` | the format can change later without breaking old booths |
-| booking id | ties the scan back to the reservation |
-| **booth id** | lets the booth refuse a wrong scan with no network |
-| patient id | opaque — **no name, no readings, nothing clinical** |
-| **one-time id** | this is what gets marked used on the first scan |
-| expiry | a photographed QR dies with the slot |
+| Field           | Why it is there                                         |
+| --------------- | ------------------------------------------------------- |
+| `jano`          | a scanner can tell this is a Jano pass at all           |
+| `1`             | the format can change later without breaking old booths |
+| booking id      | ties the scan back to the reservation                   |
+| **booth id**    | lets the booth refuse a wrong scan with no network      |
+| patient id      | opaque — **no name, no readings, nothing clinical**     |
+| **one-time id** | this is what gets marked used on the first scan         |
+| expiry          | a photographed QR dies with the slot                    |
 
 **Why structured rather than one opaque random token.** An opaque token would
 be simpler and, strictly, more private. The structured payload earns its place
@@ -169,14 +170,14 @@ behavioural defects, plus the root cause:
 4. **The diastolic bound was never checked.** `typical.diastolicBelow` is in the
    data and went unused, so 118/95 read as "in typical range" — the diastolic
    alone is hypertensive.
-5. **The systolic bound was off by one.** `systolicBelow: 120` means *below*
+5. **The systolic bound was off by one.** `systolicBelow: 120` means _below_
    120, but `<=` counted exactly 120 as in range.
 6. **`if (latest.systolic)` was a truthiness test.** A `0` or absent systolic
    fell through into the single-value branch and compared `undefined` against a
    blood-pressure range.
 7. **The latest reading was taken by array position.** The function trusted
    array order instead of picking by date.
-8. *(root cause)* The `!` non-null assertions are what let 1–6 past the type
+8. _(root cause)_ The `!` non-null assertions are what let 1–6 past the type
    checker. The rewrite has none.
 
 Fixed in [`src/core/rangeStatus.ts`](src/core/rangeStatus.ts), covered by
@@ -193,8 +194,6 @@ Reverting the file to the original turns 10 of its 16 tests red.
 - **Prescriptions, Patient Profile, Digitize, Settings.** The Me menu lists all
   five items as the reference screens do; only Consultation History works.
 - **The Jano assistant**, which is a placeholder.
-- **Cancelling a booking.** The rule exists and is tested in the state machine,
-  but no screen calls it.
 - **i18n and custom fonts**, to keep the dependency list and the build short.
 
 ## What I'd do next
