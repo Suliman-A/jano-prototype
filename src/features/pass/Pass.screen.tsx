@@ -14,7 +14,7 @@ import { spacing } from '@/theme';
  * @returns {React.JSX.Element} - The screen.
  */
 export const PassScreen = (): React.JSX.Element => (
-  <Screen testID="pass-screen">
+  <Screen hasTopInset={false} testID="pass-screen">
     <Text text="You're booked" variant="screenTitle" />
     <Text
       color="muted"

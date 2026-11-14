@@ -16,6 +16,8 @@ import { colors, layout, spacing } from '@/theme';
 
 type ScreenProps = {
   children: React.ReactNode;
+  /** False when a navigation header already covers the top inset. */
+  hasTopInset?: boolean;
   /** Pinned above the scrolling content. */
   header?: React.ReactNode;
   isScrollable?: boolean;
@@ -30,6 +32,7 @@ type ScreenProps = {
  */
 export const Screen = ({
   children,
+  hasTopInset = true,
   header,
   isScrollable = true,
   style,
@@ -40,7 +43,10 @@ export const Screen = ({
 
   return (
     <View
-      style={[styles.root, { paddingTop: insets.top + spacing.xs }]}
+      style={[
+        styles.root,
+        { paddingTop: hasTopInset ? insets.top + spacing.xs : spacing.xs },
+      ]}
       testID={testID}
     >
       {header}

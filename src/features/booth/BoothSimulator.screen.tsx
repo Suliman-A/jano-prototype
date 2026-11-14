@@ -78,6 +78,33 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
   );
 
   /**
+   * Clears the last result. Called whenever the operator changes what is
+   * about to be scanned, so a refusal never lingers over a new attempt.
+   */
+  const clearResult = (): void => {
+    checkIn.reset();
+    setNote(null);
+  };
+
+  /**
+   * Takes a new code, dropping any previous result.
+   * @param next - The scanned or pasted string.
+   */
+  const changeCode = (next: string): void => {
+    clearResult();
+    setCode(next);
+  };
+
+  /**
+   * Switches which booth this is pretending to be.
+   * @param next - The booth id.
+   */
+  const changeBooth = (next: string): void => {
+    clearResult();
+    setBoothId(next);
+  };
+
+  /**
    * Scans whatever is in the code field.
    */
   const scan = async (): Promise<void> => {
@@ -96,7 +123,7 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
    */
   const simulateScan = (): void => {
     if (passQuery.data) {
-      setCode(passQuery.data.code);
+      changeCode(passQuery.data.code);
     }
   };
 
@@ -120,7 +147,11 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
   };
 
   return (
-    <Screen style={styles.screen} testID="booth-simulator-screen">
+    <Screen
+      hasTopInset={false}
+      style={styles.screen}
+      testID="booth-simulator-screen"
+    >
       <View style={styles.banner}>
         <Text color="onBrand" text="BOOTH SIMULATOR" variant="label" />
         <Text
@@ -136,7 +167,7 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
           <Chip
             isSelected={booth.id === boothId}
             key={booth.id}
-            onPress={() => setBoothId(booth.id)}
+            onPress={() => changeBooth(booth.id)}
             testID={`sim-booth-${booth.id}`}
             text={booth.name}
           />
@@ -149,7 +180,7 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
         autoCapitalize="none"
         autoCorrect={false}
         multiline
-        onChangeText={setCode}
+        onChangeText={changeCode}
         placeholder="Paste or scan a pass code"
         placeholderTextColor={colors.muted}
         style={styles.input}

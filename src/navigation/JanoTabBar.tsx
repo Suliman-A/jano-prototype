@@ -10,6 +10,7 @@
  */
 
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { StackActions } from '@react-navigation/native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -115,9 +116,19 @@ export const JanoTabBar = ({
       type: 'tabPress',
     });
 
-    if (!event.defaultPrevented) {
-      navigation.navigate(routeName);
+    if (event.defaultPrevented) {
+      return;
     }
+
+    // Tapping the tab you are already on returns to the top of its stack,
+    // which is the only way back from a pushed screen.
+    if (routeName === activeRouteName) {
+      navigation.dispatch(StackActions.popToTop());
+
+      return;
+    }
+
+    navigation.navigate(routeName);
   };
 
   const routeByName = Object.fromEntries(

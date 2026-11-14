@@ -88,7 +88,7 @@ export const BoothDetailScreen = (): React.JSX.Element => {
   }
 
   return (
-    <Screen testID="booth-detail-screen">
+    <Screen hasTopInset={false} testID="booth-detail-screen">
       <Text text={booth.name} variant="screenTitle" />
       <Text
         color="muted"
