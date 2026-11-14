@@ -7,7 +7,7 @@
  * nobody mistakes it for part of the patient app.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { request } from '@/api/client';
@@ -43,6 +43,7 @@ const DEVICE_READINGS: {
  */
 export const BoothSimulatorScreen = (): React.JSX.Element => {
   const [boothId, setBoothId] = useState(booths[0].id);
+  const [hasPickedBooth, setHasPickedBooth] = useState(false);
   const [code, setCode] = useState('');
   const [checkedIn, setCheckedIn] = useState<Visit | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -60,6 +61,18 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
       ? request(Endpoint.Pass, { visitId: upcoming.id })
       : Promise.resolve(null);
   }, [visitsQuery.data]);
+
+  const passBoothId = passQuery.data?.pass.boothId;
+  const passBooth = booths.find((booth) => booth.id === passBoothId);
+
+  // Start on the booth the waiting pass was issued for, so the happy path
+  // works without the operator having to match them up by hand. Choosing a
+  // booth deliberately stops this.
+  useEffect(() => {
+    if (!hasPickedBooth && passBoothId) {
+      setBoothId(passBoothId);
+    }
+  }, [hasPickedBooth, passBoothId]);
 
   const checkIn = useAsyncAction(async (scannedCode: string) =>
     request(Endpoint.CheckIn, { boothId, code: scannedCode }),
@@ -101,6 +114,7 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
    */
   const changeBooth = (next: string): void => {
     clearResult();
+    setHasPickedBooth(true);
     setBoothId(next);
   };
 
@@ -173,6 +187,18 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
           />
         ))}
       </View>
+
+      {passBooth ? (
+        <Text
+          color={passBooth.id === boothId ? 'muted' : 'warning'}
+          text={
+            passBooth.id === boothId
+              ? `The waiting pass is for ${passBooth.name}.`
+              : `Heads up: the waiting pass is for ${passBooth.name}, so this booth will refuse it.`
+          }
+          variant="caption"
+        />
+      ) : null}
 
       <Text text="2. Scan the pass" variant="sectionTitle" />
       <TextInput
