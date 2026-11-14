@@ -6,8 +6,7 @@
 import type { JanoFailure } from '@/core/errors';
 
 export type Result<T> =
-  | { ok: true; value: T }
-  | { error: JanoFailure; ok: false };
+  { ok: true; value: T } | { error: JanoFailure; ok: false };
 
 /**
  * Wraps a successful value.

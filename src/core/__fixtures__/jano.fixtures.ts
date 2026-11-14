@@ -4,6 +4,7 @@
  */
 
 import type { Reading, Typical } from '@/core/rangeStatus';
+import type { StoragePort } from '@/api/mock/store';
 import type { Pass, PassPayload, Visit, VisitReading } from '@/core/types';
 
 export const DATE_AUGUST = '2026-08-06';
@@ -143,3 +144,47 @@ export const makeVisitReading = (
   value: 74,
   ...overrides,
 });
+
+// --- Backend test helpers --------------------------------------------------
+
+/**
+ * A storage port backed by a plain object, so persistence tests exercise the
+ * real serialise and parse round-trip rather than a mock that always agrees.
+ * @returns {StoragePort & { entries: Record<string, string> }} - The port.
+ */
+export const createMemoryStorage = (): StoragePort & {
+  entries: Record<string, string>;
+} => {
+  const entries: Record<string, string> = {};
+
+  return {
+    entries,
+    getItem: (key) => Promise.resolve(entries[key] ?? null),
+    setItem: (key, value) => {
+      entries[key] = value;
+
+      return Promise.resolve();
+    },
+  };
+};
+
+/**
+ * A clock the test moves by hand, so nothing ever reads real time.
+ * @param start - The moment the clock starts at.
+ * @returns {{ now: () => number; set: (at: number) => void }} - The clock.
+ */
+export const createTestClock = (
+  start: number,
+): { now: () => number; set: (at: number) => void } => {
+  let current = start;
+
+  return {
+    now: () => current,
+    set: (at: number) => {
+      current = at;
+    },
+  };
+};
+
+/** A fixed "today" for backend tests: morning, so slots lie ahead. */
+export const FIXED_NOW = Date.parse('2026-11-20T09:00:00+08:00');

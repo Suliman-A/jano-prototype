@@ -38,16 +38,42 @@ export enum JanoErrorCode {
 }
 
 export type JanoFailure =
-  | { boothId: string; boothStatus: string; code: JanoErrorCode.BoothUnavailable }
-  | { code: JanoErrorCode.CheckInWindowClosed; closesAt: number; now: number; opensAt: number }
-  | { code: JanoErrorCode.IllegalTransition; event: VisitEventType; from: VisitStatus }
+  | {
+      boothId: string;
+      boothStatus: string;
+      code: JanoErrorCode.BoothUnavailable;
+    }
+  | {
+      code: JanoErrorCode.CheckInWindowClosed;
+      closesAt: number;
+      now: number;
+      opensAt: number;
+    }
+  | {
+      code: JanoErrorCode.IllegalTransition;
+      event: VisitEventType;
+      from: VisitStatus;
+    }
   | { code: JanoErrorCode.PassBadVersion; version: string }
   | { code: JanoErrorCode.PassMalformed }
-  | { code: JanoErrorCode.PassUsed; jti: string; usedAt: number; usedByBoothId: string }
+  | {
+      code: JanoErrorCode.PassUsed;
+      jti: string;
+      usedAt: number;
+      usedByBoothId: string;
+    }
   | { code: JanoErrorCode.PassExpired; expiresAt: number; now: number }
-  | { code: JanoErrorCode.PassWrongPatient; expectedPatientId: string; passPatientId: string }
+  | {
+      code: JanoErrorCode.PassWrongPatient;
+      expectedPatientId: string;
+      passPatientId: string;
+    }
   | { code: JanoErrorCode.PassUnknown; jti: string }
-  | { code: JanoErrorCode.PassWrongBooth; passBoothId: string; scanningBoothId: string }
+  | {
+      code: JanoErrorCode.PassWrongBooth;
+      passBoothId: string;
+      scanningBoothId: string;
+    }
   | { code: JanoErrorCode.SlotTaken; slotId: string }
   | { code: JanoErrorCode.SlotUnknown; slotId: string }
   | { code: JanoErrorCode.UnknownMetric; metricKey: string }

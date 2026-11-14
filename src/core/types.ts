@@ -8,10 +8,7 @@
 import type { Reading } from '@/core/rangeStatus';
 
 export type BoothFunctionKey =
-  | 'basic'
-  | 'maternal'
-  | 'pediatric'
-  | 'physical_therapy';
+  'basic' | 'maternal' | 'pediatric' | 'physical_therapy';
 
 export type BoothStatus = 'maintenance' | 'open';
 
@@ -38,12 +35,7 @@ export type Slot = {
 };
 
 export type MetricKey =
-  | 'blood_pressure'
-  | 'body_fat'
-  | 'pulse'
-  | 'spo2'
-  | 'temperature'
-  | 'weight';
+  'blood_pressure' | 'body_fat' | 'pulse' | 'spo2' | 'temperature' | 'weight';
 
 export type Metric = {
   explain: string;
@@ -62,18 +54,10 @@ export type VisitReading = Reading & {
 };
 
 export type VisitStatus =
-  | 'cancelled'
-  | 'checked_in'
-  | 'completed'
-  | 'no_show'
-  | 'scheduled';
+  'cancelled' | 'checked_in' | 'completed' | 'no_show' | 'scheduled';
 
 export type VisitEventType =
-  | 'CANCEL'
-  | 'CHECK_IN'
-  | 'CHECK_OUT'
-  | 'EXPIRE'
-  | 'RECORD_READING';
+  'CANCEL' | 'CHECK_IN' | 'CHECK_OUT' | 'EXPIRE' | 'RECORD_READING';
 
 export type Visit = {
   bookingId: string;
