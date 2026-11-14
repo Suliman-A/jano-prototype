@@ -43,7 +43,6 @@ const DEVICE_READINGS: {
  */
 export const BoothSimulatorScreen = (): React.JSX.Element => {
   const [boothId, setBoothId] = useState(booths[0].id);
-  const [hasPickedBooth, setHasPickedBooth] = useState(false);
   const [code, setCode] = useState('');
   const [checkedIn, setCheckedIn] = useState<Visit | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -65,14 +64,15 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
   const passBoothId = passQuery.data?.pass.boothId;
   const passBooth = booths.find((booth) => booth.id === passBoothId);
 
-  // Start on the booth the waiting pass was issued for, so the happy path
-  // works without the operator having to match them up by hand. Choosing a
-  // booth deliberately stops this.
+  // Follow whichever booth the waiting pass was issued for, so the happy path
+  // works without matching them up by hand. A booth picked by hand sticks
+  // until a different pass turns up, which is when the operator's choice has
+  // gone stale.
   useEffect(() => {
-    if (!hasPickedBooth && passBoothId) {
+    if (passBoothId) {
       setBoothId(passBoothId);
     }
-  }, [hasPickedBooth, passBoothId]);
+  }, [passBoothId]);
 
   const checkIn = useAsyncAction(async (scannedCode: string) =>
     request(Endpoint.CheckIn, { boothId, code: scannedCode }),
@@ -114,7 +114,6 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
    */
   const changeBooth = (next: string): void => {
     clearResult();
-    setHasPickedBooth(true);
     setBoothId(next);
   };
 
