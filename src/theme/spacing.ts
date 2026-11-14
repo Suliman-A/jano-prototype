@@ -15,12 +15,10 @@ export const spacing = {
 } as const;
 
 export const layout = {
-  /** Diameter of the raised tab button. */
-  raisedTabSize: 68,
   /** Horizontal padding on every screen. */
   screenPadding: 20,
-  /** Diameter of the small tab buttons. */
-  tabButtonSize: 58,
   /** How much vertical room the custom tab bar needs. */
-  tabBarHeight: 92,
+  tabBarHeight: 120,
+  /** Diameter of every tab button. They are all the same size. */
+  tabButtonSize: 74,
 } as const;
