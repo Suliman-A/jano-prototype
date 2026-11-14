@@ -39,6 +39,11 @@ export const useQueryOnce = <T>(
     setTick((current) => current + 1);
   }, []);
 
+  // Collapsed to one string rather than spread into the dependency array:
+  // React requires that array to keep the same length on every render, and
+  // spreading a caller's list cannot guarantee it.
+  const depsKey = JSON.stringify(deps);
+
   useEffect(() => {
     let isCurrent = true;
 
@@ -67,7 +72,7 @@ export const useQueryOnce = <T>(
       isCurrent = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick, ...deps]);
+  }, [tick, depsKey]);
 
   // The listener only ever bumps a counter, so it captures nothing that can
   // go stale.

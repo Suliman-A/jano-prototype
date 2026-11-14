@@ -148,7 +148,13 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
       return;
     }
 
-    await takeReadings.run(checkedIn.id);
+    const recorded = await takeReadings.run(checkedIn.id);
+
+    // A visit that completes with missing measurements is worse than one that
+    // stays open, so a failed device reading stops the check-out.
+    if (!recorded) {
+      return;
+    }
 
     const result = await checkOut.run(checkedIn.id);
 
@@ -248,6 +254,26 @@ export const BoothSimulatorScreen = (): React.JSX.Element => {
               variant="caption"
             />
           ) : null}
+        </Card>
+      ) : null}
+
+      {(takeReadings.error ?? checkOut.error) ? (
+        <Card style={styles.rejected} testID="sim-visit-error">
+          <Text
+            color="danger"
+            text="The visit could not be completed"
+            variant="label"
+          />
+          <Text
+            color="danger"
+            text={(takeReadings.error ?? checkOut.error)?.message}
+            variant="caption"
+          />
+          <Text
+            color="muted"
+            text="The patient is still checked in. Try again."
+            variant="caption"
+          />
         </Card>
       ) : null}
 

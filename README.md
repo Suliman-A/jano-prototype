@@ -71,6 +71,14 @@ different booth before scanning.
 3. **One patient, no auth.** The sample data has one — `pt_demo_001`, Sophia
    Alvarez.
 4. **Flowers are emoji**, which the brief explicitly allows.
+5. **The bottom bar departs from the brief's wording in two places.** The brief
+   describes Farm as "larger, raised and centred" and Jano as sitting "around
+   the Jano logo". Here all four circles are the same size and only the fill
+   changes, because resizing on tap made the row jump under the finger; Me and
+   Jano are the raised pair, matching the reference screens; and the wordmark
+   is omitted. The non-standard positions the interaction is really about —
+   Me bottom-left, Farm and Temple paired in the middle, Jano bottom-right —
+   are unchanged.
 5. **No signature on the QR.** See "What is inside the QR code" below.
 6. **Timestamps are epoch milliseconds, never `Date` objects.** State is
    persisted as JSON, and a `Date` comes back out of `JSON.parse` as a string.
