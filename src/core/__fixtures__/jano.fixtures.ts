@@ -4,6 +4,7 @@
  */
 
 import type { Reading, Typical } from '@/core/rangeStatus';
+import type { Pass, PassPayload, Visit, VisitReading } from '@/core/types';
 
 export const DATE_AUGUST = '2026-08-06';
 export const DATE_SEPTEMBER = '2026-09-17';
@@ -52,4 +53,93 @@ export const makeBloodPressureReading = (
   date,
   diastolic,
   systolic,
+});
+
+// --- Visits and passes -----------------------------------------------------
+
+export const PATIENT_ID = 'pt_demo_001';
+export const OTHER_PATIENT_ID = 'pt_demo_002';
+export const BOOTH_AYALA_ID = 'bth_ayala';
+export const BOOTH_POBLACION_ID = 'bth_poblacion';
+export const BOOKING_ID = 'bkg_test_001';
+export const VISIT_ID = 'vst_test_001';
+export const SLOT_ID = 'slt_test_001';
+export const JTI = 'jti_test_001';
+
+export const SLOT_LENGTH_MS = 30 * 60 * 1000;
+export const MINUTE_MS = 60 * 1000;
+
+/** A fixed slot start, so no test ever reads the real clock. */
+export const SLOT_STARTS_AT = Date.parse('2026-11-20T11:30:00+08:00');
+export const SLOT_ENDS_AT = SLOT_STARTS_AT + SLOT_LENGTH_MS;
+
+/** A moment inside the check-in window. */
+export const DURING_SLOT = SLOT_STARTS_AT + MINUTE_MS;
+
+/**
+ * Builds a visit sitting at its slot, scheduled and untouched.
+ * @param overrides - Fields to change for the case under test.
+ * @returns {Visit} - The visit.
+ */
+export const makeVisit = (overrides: Partial<Visit> = {}): Visit => ({
+  bookingId: BOOKING_ID,
+  boothId: BOOTH_AYALA_ID,
+  cancelledAt: null,
+  checkedInAt: null,
+  checkedOutAt: null,
+  id: VISIT_ID,
+  patientId: PATIENT_ID,
+  readings: [],
+  scheduledFor: SLOT_STARTS_AT,
+  scheduledUntil: SLOT_ENDS_AT,
+  slotId: SLOT_ID,
+  status: 'scheduled',
+  ...overrides,
+});
+
+/**
+ * Builds an unused pass for the visit built by {@link makeVisit}.
+ * @param overrides - Fields to change for the case under test.
+ * @returns {Pass} - The pass.
+ */
+export const makePass = (overrides: Partial<Pass> = {}): Pass => ({
+  bookingId: BOOKING_ID,
+  boothId: BOOTH_AYALA_ID,
+  expiresAt: SLOT_ENDS_AT,
+  issuedAt: SLOT_STARTS_AT - 60 * MINUTE_MS,
+  jti: JTI,
+  patientId: PATIENT_ID,
+  usedAt: null,
+  usedByBoothId: null,
+  ...overrides,
+});
+
+/**
+ * Builds the fields that travel inside a QR code.
+ * @param overrides - Fields to change for the case under test.
+ * @returns {PassPayload} - The payload.
+ */
+export const makePassPayload = (
+  overrides: Partial<PassPayload> = {},
+): PassPayload => ({
+  bookingId: BOOKING_ID,
+  boothId: BOOTH_AYALA_ID,
+  expiresAt: SLOT_ENDS_AT,
+  jti: JTI,
+  patientId: PATIENT_ID,
+  ...overrides,
+});
+
+/**
+ * Builds a reading the booth could record during a visit.
+ * @param overrides - Fields to change for the case under test.
+ * @returns {VisitReading} - The reading.
+ */
+export const makeVisitReading = (
+  overrides: Partial<VisitReading> = {},
+): VisitReading => ({
+  date: '2026-11-20',
+  metricKey: 'pulse',
+  value: 74,
+  ...overrides,
 });
