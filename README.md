@@ -105,29 +105,30 @@ That is the shape a real push channel has: swapping in a WebSocket replaces
 
 In two places, deliberately.
 
-**Offline, from the code alone** — `verifyPass` in
-[`src/core/pass.ts:95`](src/core/pass.ts#L95). A booth on poor mobile data can
+**Offline, from the code alone** — `verifyPass`,
+[`src/core/pass.ts:92`](src/core/pass.ts#L92), which leans on `decodePass`,
+[`src/core/pass.ts:48`](src/core/pass.ts#L48). A booth on poor mobile data can
 still refuse a pass without reaching a server:
 
 | Reason | Where |
 |---|---|
-| `PASS_MALFORMED` — not a Jano pass, truncated, or an empty/non-numeric field | [`src/core/pass.ts:55`](src/core/pass.ts#L55) |
-| `PASS_BAD_VERSION` — a format this booth does not understand | [`src/core/pass.ts:65`](src/core/pass.ts#L65) |
-| `PASS_EXPIRED` — past the end of its slot | [`src/core/pass.ts:107`](src/core/pass.ts#L107) |
-| `PASS_WRONG_BOOTH` — issued for a different Temple | [`src/core/pass.ts:115`](src/core/pass.ts#L115) |
+| `PASS_MALFORMED` — not a Jano pass, truncated, or an empty/non-numeric field | `decodePass`, [`src/core/pass.ts:52`](src/core/pass.ts#L52), [`:59`](src/core/pass.ts#L59), [`:69`](src/core/pass.ts#L69) |
+| `PASS_BAD_VERSION` — a format this booth does not understand | `decodePass`, [`src/core/pass.ts:63`](src/core/pass.ts#L63) |
+| `PASS_EXPIRED` — past the end of its slot | `verifyPass`, [`src/core/pass.ts:106`](src/core/pass.ts#L106) |
+| `PASS_WRONG_BOOTH` — issued for a different Temple | `verifyPass`, [`src/core/pass.ts:114`](src/core/pass.ts#L114) |
 
-**Against the store** — `checkIn` in
-[`src/api/mock/backend.ts:190`](src/api/mock/backend.ts#L190):
+**Against the store** — `checkIn`,
+[`src/api/mock/backend.ts:208`](src/api/mock/backend.ts#L208):
 
 | Reason | Where |
 |---|---|
-| `PASS_UNKNOWN` — no such pass on record | [`src/api/mock/backend.ts:209`](src/api/mock/backend.ts#L209) |
-| `PASS_USED` — scanned once already | [`src/api/mock/backend.ts:216`](src/api/mock/backend.ts#L216) |
-| `PASS_WRONG_PATIENT` — the code names someone other than the booking | [`src/api/mock/backend.ts:226`](src/api/mock/backend.ts#L226) |
-| `BOOTH_UNAVAILABLE` — the booth is in maintenance | [`src/api/mock/backend.ts:237`](src/api/mock/backend.ts#L237) |
-| `ILLEGAL_TRANSITION`, `CHECK_IN_WINDOW_CLOSED` — the visit itself refuses | `applyVisitEvent`, [`src/core/visitMachine.ts:75`](src/core/visitMachine.ts#L75) |
+| `PASS_UNKNOWN` — no such pass on record | [`src/api/mock/backend.ts:228`](src/api/mock/backend.ts#L228) |
+| `PASS_USED` — scanned once already | [`src/api/mock/backend.ts:235`](src/api/mock/backend.ts#L235) |
+| `PASS_WRONG_PATIENT` — the code names someone other than the booking | [`src/api/mock/backend.ts:245`](src/api/mock/backend.ts#L245) |
+| `BOOTH_UNAVAILABLE` — the booth is in maintenance | [`src/api/mock/backend.ts:258`](src/api/mock/backend.ts#L258) |
+| `ILLEGAL_TRANSITION`, `CHECK_IN_WINDOW_CLOSED` — the visit itself refuses | `applyVisitEvent`, [`src/core/visitMachine.ts:77`](src/core/visitMachine.ts#L77) ([`:85`](src/core/visitMachine.ts#L85), [`:105`](src/core/visitMachine.ts#L105)) |
 
-Every code is in [`src/core/errors.ts`](src/core/errors.ts).
+Every code is in `JanoErrorCode`, [`src/core/errors.ts:9`](src/core/errors.ts#L9).
 
 **The order matters, and is tested.** The booth check runs before any store
 lookup, so a wrong-booth scan is refused offline. The already-used check runs
@@ -139,7 +140,10 @@ fail as already-used rather than illegal-transition on a re-scan".
 
 ### 2. What is inside the QR code, and why?
 
-A readable, dot-separated string — [`src/core/pass.ts:35`](src/core/pass.ts#L35):
+A readable, dot-separated string. The fields are `PassPayload`,
+[`src/core/types.ts:103`](src/core/types.ts#L103); the grammar is documented at
+[`src/core/pass.ts:8`](src/core/pass.ts#L8) and built by `encodePass`,
+[`src/core/pass.ts:28`](src/core/pass.ts#L28):
 
 ```
 jano.1.bkg_7fa2.bth_ayala.pt_demo_001.jti_4d9c1e.1763131200000
