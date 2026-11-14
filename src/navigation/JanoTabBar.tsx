@@ -121,9 +121,16 @@ export const JanoTabBar = ({
     }
 
     // Tapping the tab you are already on returns to the top of its stack,
-    // which is the only way back from a pushed screen.
+    // which is the only way back from a pushed screen. Tabs that are a plain
+    // screen, or a stack already at its root, have nothing to pop — asking
+    // them to anyway logs an unhandled-action warning.
     if (routeName === activeRouteName) {
-      navigation.dispatch(StackActions.popToTop());
+      const nested = state.routes[state.index].state;
+      const canPop = typeof nested?.index === 'number' && nested.index > 0;
+
+      if (canPop) {
+        navigation.dispatch(StackActions.popToTop());
+      }
 
       return;
     }
