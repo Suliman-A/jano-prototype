@@ -5,18 +5,6 @@ medical booth (a "Temple"), carry a QR check-in pass, have the booth accept it
 and take measurements, and watch the visit land in Consultation History and the
 new readings appear on the Farm.
 
-## What it does
-
-1. **Temple** — find a booth by area or by the care it offers, on a map or in
-   a list, and book a 30-minute slot.
-2. **Pass** — a QR check-in pass, pinned to the top of the Temple tab so it is
-   reachable from the front of the app.
-3. **Booth simulator** — a stand-in for the physical booth. There is no real
-   hardware to demo against, so this screen plays the booth's part: it accepts
-   or refuses the pass, records readings, and checks the patient out.
-4. **Farm and history** — the visit appears in Consultation History and the new
-   readings appear on the Farm, **with no manual refresh**.
-
 ## Running it
 
 ```bash
@@ -59,20 +47,6 @@ LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npm run ios
 
 </details>
 
-## Walking the demo
-
-1. Open **Temple**, pick a booth, choose a time, and tap **Book this visit**.
-   The pass appears.
-2. Go back to Temple and tap **Open the Booth simulator**.
-3. Choose the same booth, tap **Simulate scanning the patient's QR**, then
-   **Accept pass and check in**.
-4. Tap **Record readings and check out**.
-5. Open **Farm** — the new readings are already there. Tap a flower for its
-   card. Open **Me → Consultation History** — the visit is already listed.
-
-To see a pass refused, scan the same code twice, or switch the simulator to a
-different booth before scanning.
-
 ## Main decisions and assumptions
 
 1. **React Native rather than a web app.** The brief suggested React with Vite
@@ -109,18 +83,6 @@ different booth before scanning.
    window would make the flow impossible to demonstrate without waiting. The
    rule is unchanged and still tested from both sides — see
    `CHECK_IN_LEAD_MS` in [`src/core/visitMachine.ts`](src/core/visitMachine.ts).
-
-### How the patient app updates without a refresh
-
-There is no query cache and nothing to invalidate. The store in
-[`src/api/mock/store.ts`](src/api/mock/store.ts) holds one state object,
-**replaces** it rather than mutating it, and notifies its subscribers. Screens
-read it through `useSyncExternalStore` in
-[`src/hooks/useQueryOnce.ts`](src/hooks/useQueryOnce.ts), so when the simulator
-checks a patient out, every mounted screen reloads on its own.
-
-That is the shape a real push channel has: swapping in a WebSocket replaces
-`subscribe` and nothing else.
 
 ## The two questions
 
@@ -234,33 +196,6 @@ Fixed in [`src/core/rangeStatus.ts`](src/core/rangeStatus.ts), covered by
 [`src/core/__tests__/rangeStatus.test.ts`](src/core/__tests__/rangeStatus.test.ts),
 and used by the real Farm card so it is live code rather than an orphan file.
 Reverting the file to the original turns 10 of its 16 tests red.
-
-## Testing
-
-`npm test` — 93 tests, all behavioural. They follow the unit-test protocol in
-[`docs/TEST_PROTOCOL.md`](docs/TEST_PROTOCOL.md): a pseudocode plan above each
-suite, `describe(unit) > describe(method) > describe(category)`, security cases
-first, `should successfully` / `should fail` naming, and Arrange/Act/Assert in
-every body.
-
-They were checked by breaking the code on purpose: reverting `rangeStatus.ts`
-to the original turns 10 of its 16 tests red, and disabling the wrong-booth
-check in `verifyPass` turns 3 more red across the pass and check-in suites.
-
-Three things keep them honest:
-
-- **Assert the specific error code**, never just "it rejected". Half of these
-  failures are reachable by two different code paths.
-- **No `Date.now()` in `src/core/`.** The clock is injected, so window logic
-  that is an hour out cannot pass at midday and fail at 23:45.
-- **`resetStore()` in a global `beforeEach`.** Jest's `clearMocks` does not
-  reset module state.
-
-The end-to-end test
-([`src/__tests__/visitLifecycle.e2e.test.ts`](src/__tests__/visitLifecycle.e2e.test.ts))
-is the only one that proves the no-refresh behaviour: it mounts two fake patient
-screens that reload *only* when the store notifies them, drives the whole visit
-through the booth, and asserts the screens updated on their own.
 
 ## What I cut
 
