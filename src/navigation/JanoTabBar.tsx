@@ -3,8 +3,8 @@
  *
  * Four circular tabs, not a row of equal ones: Me at the left and Jano at the
  * right sit a little higher than Farm and Temple in the middle. The active tab
- * is filled. Farm is permanently the larger circle, so nothing resizes when a
- * tab is tapped and the row never shifts.
+ * is filled. Every circle is the same size whatever its state, so tapping a
+ * tab never resizes anything and the row never shifts.
  *
  * Tapping Me does not navigate — it opens the Me menu over the current screen.
  */
@@ -37,8 +37,6 @@ type TabButtonProps = {
   isActive: boolean;
   /** Me and Jano sit a little above the two middle tabs. */
   isLifted?: boolean;
-  /** Farm is drawn larger than the rest, always. */
-  isLarge?: boolean;
   onPress: () => void;
   routeName: string;
 };
@@ -50,12 +48,11 @@ type TabButtonProps = {
  */
 const TabButton = ({
   isActive,
-  isLarge = false,
   isLifted = false,
   onPress,
   routeName,
 }: TabButtonProps): React.JSX.Element => {
-  const size = isLarge ? layout.raisedTabSize : layout.tabButtonSize;
+  const size = layout.tabButtonSize;
 
   return (
     <Pressable
@@ -79,7 +76,7 @@ const TabButton = ({
       <Icon
         color={isActive ? 'onBrand' : 'brand'}
         name={ICONS[routeName]}
-        size={isLarge ? 24 : 21}
+        size={22}
       />
       <Text
         color={isActive ? 'onBrand' : 'ink'}
@@ -145,7 +142,6 @@ export const JanoTabBar = ({
         <View style={styles.centre}>
           <TabButton
             isActive={!meMenu.isOpen && activeRouteName === 'FarmTab'}
-            isLarge
             onPress={() => go('FarmTab', routeByName.FarmTab.key)}
             routeName="FarmTab"
           />
@@ -196,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: layout.raisedTabSize + spacing.xl,
+    minHeight: layout.tabButtonSize + spacing.xl,
     paddingHorizontal: spacing.lg,
   },
 });
