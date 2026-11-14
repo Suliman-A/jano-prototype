@@ -1,0 +1,253 @@
+# Jano — patient prototype
+
+A working prototype of the patient side of one Jano visit: book a slot at a
+medical booth (a "Temple"), carry a QR check-in pass, have the booth accept it
+and take measurements, and watch the visit land in Consultation History and the
+new readings appear on the Farm.
+
+## What it does
+
+1. **Temple** — find a booth by area or by the care it offers, on a map or in
+   a list, and book a 30-minute slot.
+2. **Pass** — a QR check-in pass, pinned to the top of the Temple tab so it is
+   reachable from the front of the app.
+3. **Booth simulator** — a stand-in for the physical booth. There is no real
+   hardware to demo against, so this screen plays the booth's part: it accepts
+   or refuses the pass, records readings, and checks the patient out.
+4. **Farm and history** — the visit appears in Consultation History and the new
+   readings appear on the Farm, **with no manual refresh**.
+
+## Running it
+
+Requires Xcode and the iOS simulator. This is a native Expo app, so there is no
+hosted link.
+
+```bash
+npm install
+npx expo prebuild --platform ios
+npm run ios
+```
+
+If CocoaPods fails with `Unicode Normalization not appropriate for ASCII-8BIT`,
+that is a CocoaPods bug under some Ruby builds, not a dependency problem. Run
+it once with a UTF-8 locale and build again:
+
+```bash
+cd ios && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install && cd ..
+```
+
+### Tests
+
+```bash
+npm test
+```
+
+Also `npm run tscheck` for types.
+
+## Walking the demo
+
+1. Open **Temple**, pick a booth, choose a time, and tap **Book this visit**.
+   The pass appears.
+2. Go back to Temple and tap **Open the Booth simulator**.
+3. Choose the same booth, tap **Simulate scanning the patient's QR**, then
+   **Accept pass and check in**.
+4. Tap **Record readings and check out**.
+5. Open **Farm** — the new readings are already there. Tap a flower for its
+   card. Open **Me → Consultation History** — the visit is already listed.
+
+To see a pass refused, scan the same code twice, or switch the simulator to a
+different booth before scanning.
+
+## Main decisions and assumptions
+
+1. **React Native rather than a web app.** The brief suggested React with Vite
+   or Next. This is an Expo app instead, so the deliverable is the repo plus a
+   screen recording — there is no URL to open.
+2. **Sample data only, behind one swap seam.** Every screen calls
+   `request()` in [`src/api/client.ts`](src/api/client.ts). Today it routes to
+   a mock backend with a ~300 ms delay; replacing it with HTTP is a one-file
+   change. `httpRequest` is present as a stub that throws, so the swap point is
+   obvious.
+3. **One patient, no auth.** The sample data has one — `pt_demo_001`, Sophia
+   Alvarez.
+4. **Flowers are emoji**, which the brief explicitly allows.
+5. **No signature on the QR.** See "What is inside the QR code" below.
+6. **Timestamps are epoch milliseconds, never `Date` objects.** State is
+   persisted as JSON, and a `Date` comes back out of `JSON.parse` as a string.
+7. **Slots are generated, not stored.** Each booth's hours produce 30-minute
+   slots for three days; roughly one in five is marked taken, derived from a
+   hash of the slot id so it stays the same across reloads.
+8. **The booth simulator is styled as an operator console**, not as patient UI,
+   so a reviewer is never unsure which side they are looking at.
+
+### How the patient app updates without a refresh
+
+There is no query cache and nothing to invalidate. The store in
+[`src/api/mock/store.ts`](src/api/mock/store.ts) holds one state object,
+**replaces** it rather than mutating it, and notifies its subscribers. Screens
+read it through `useSyncExternalStore` in
+[`src/hooks/useQueryOnce.ts`](src/hooks/useQueryOnce.ts), so when the simulator
+checks a patient out, every mounted screen reloads on its own.
+
+That is the shape a real push channel has: swapping in a WebSocket replaces
+`subscribe` and nothing else.
+
+## The two questions
+
+### 1. Where is a pass rejected, and for which reasons?
+
+In two places, deliberately.
+
+**Offline, from the code alone** — `verifyPass` in
+[`src/core/pass.ts:95`](src/core/pass.ts#L95). A booth on poor mobile data can
+still refuse a pass without reaching a server:
+
+| Reason | Where |
+|---|---|
+| `PASS_MALFORMED` — not a Jano pass, truncated, or an empty/non-numeric field | [`src/core/pass.ts:55`](src/core/pass.ts#L55) |
+| `PASS_BAD_VERSION` — a format this booth does not understand | [`src/core/pass.ts:65`](src/core/pass.ts#L65) |
+| `PASS_EXPIRED` — past the end of its slot | [`src/core/pass.ts:107`](src/core/pass.ts#L107) |
+| `PASS_WRONG_BOOTH` — issued for a different Temple | [`src/core/pass.ts:115`](src/core/pass.ts#L115) |
+
+**Against the store** — `checkIn` in
+[`src/api/mock/backend.ts:190`](src/api/mock/backend.ts#L190):
+
+| Reason | Where |
+|---|---|
+| `PASS_UNKNOWN` — no such pass on record | [`src/api/mock/backend.ts:209`](src/api/mock/backend.ts#L209) |
+| `PASS_USED` — scanned once already | [`src/api/mock/backend.ts:216`](src/api/mock/backend.ts#L216) |
+| `PASS_WRONG_PATIENT` — the code names someone other than the booking | [`src/api/mock/backend.ts:226`](src/api/mock/backend.ts#L226) |
+| `BOOTH_UNAVAILABLE` — the booth is in maintenance | [`src/api/mock/backend.ts:237`](src/api/mock/backend.ts#L237) |
+| `ILLEGAL_TRANSITION`, `CHECK_IN_WINDOW_CLOSED` — the visit itself refuses | `applyVisitEvent`, [`src/core/visitMachine.ts:75`](src/core/visitMachine.ts#L75) |
+
+Every code is in [`src/core/errors.ts`](src/core/errors.ts).
+
+**The order matters, and is tested.** The booth check runs before any store
+lookup, so a wrong-booth scan is refused offline. The already-used check runs
+before the state machine, so a second scan reports *already used* rather than
+*illegal transition* — both refuse the scan, but only one tells the patient
+something true. See
+[`src/api/__tests__/checkIn.test.ts`](src/api/__tests__/checkIn.test.ts), "should
+fail as already-used rather than illegal-transition on a re-scan".
+
+### 2. What is inside the QR code, and why?
+
+A readable, dot-separated string — [`src/core/pass.ts:35`](src/core/pass.ts#L35):
+
+```
+jano.1.bkg_7fa2.bth_ayala.pt_demo_001.jti_4d9c1e.1763131200000
+```
+
+| Field | Why it is there |
+|---|---|
+| `jano` | a scanner can tell this is a Jano pass at all |
+| `1` | the format can change later without breaking old booths |
+| booking id | ties the scan back to the reservation |
+| **booth id** | lets the booth refuse a wrong scan with no network |
+| patient id | opaque — **no name, no readings, nothing clinical** |
+| **one-time id** | this is what gets marked used on the first scan |
+| expiry | a photographed QR dies with the slot |
+
+**Why structured rather than one opaque random token.** An opaque token would
+be simpler and, strictly, more private. The structured payload earns its place
+because the booth is the offline party: it should be able to say "this is not
+for this Temple" and "this expired" from the code alone. Single-use cannot work
+that way — you cannot tell from the characters whether a code was already
+scanned — so the design forces an honest split between what is decided offline
+and the one thing that needs the store.
+
+**Why no signature.** Neither graded rejection needs one: already-used is a
+store lookup and wrong-booth is a field comparison. A checksum would have meant
+a crypto dependency and a paragraph of caveats for no real protection, because
+the key would ship in the app bundle. It is listed under "what I'd do next"
+instead.
+
+**Why no name in the payload.** A QR on a phone screen is photographable and
+shoulder-surfable. The booth resolves the patient id to a name over its own
+authenticated channel. There is a test for this:
+[`src/core/__tests__/pass.test.ts`](src/core/__tests__/pass.test.ts), "should
+successfully omit the patient name from the encoded pass".
+
+## The bugs in `rangeStatus`
+
+The file was committed exactly as received
+([`6e7a60b`](../../commit/6e7a60b)) so the fixes are visible as a diff. Seven
+behavioural defects, plus the root cause:
+
+1. **Empty history threw.** `history[history.length - 1]` is `undefined`, so
+   reading `.systolic` is a `TypeError`. `body_fat` ships with `history: []`, so
+   the Farm crashed on real data from the sample file.
+2. **A metric with no typical range reported "in".** It told the patient their
+   weight was inside a range that does not exist. It is `none` now — "cannot
+   say", not "fine".
+3. **A failed measurement reported "below".** Weight is `null` on 2026-09-17;
+   `null < 60` coerces to `0 < 60`, so a measurement the booth could not take
+   read as a dangerously low one.
+4. **The diastolic bound was never checked.** `typical.diastolicBelow` is in the
+   data and went unused, so 118/95 read as "in typical range" — the diastolic
+   alone is hypertensive.
+5. **The systolic bound was off by one.** `systolicBelow: 120` means *below*
+   120, but `<=` counted exactly 120 as in range.
+6. **`if (latest.systolic)` was a truthiness test.** A `0` or absent systolic
+   fell through into the single-value branch and compared `undefined` against a
+   blood-pressure range.
+7. **The latest reading was taken by array position.** The function trusted
+   array order instead of picking by date.
+8. *(root cause)* The `!` non-null assertions are what let 1–6 past the type
+   checker. The rewrite has none.
+
+Fixed in [`src/core/rangeStatus.ts`](src/core/rangeStatus.ts), covered by
+[`src/core/__tests__/rangeStatus.test.ts`](src/core/__tests__/rangeStatus.test.ts),
+and used by the real Farm card so it is live code rather than an orphan file.
+Reverting the file to the original turns 10 of its 16 tests red.
+
+## Testing
+
+`npm test` — 93 tests, all behavioural. They follow the unit-test protocol in
+[`docs/TEST_PROTOCOL.md`](docs/TEST_PROTOCOL.md): a pseudocode plan above each
+suite, `describe(unit) > describe(method) > describe(category)`, security cases
+first, `should successfully` / `should fail` naming, and Arrange/Act/Assert in
+every body.
+
+Three things keep them honest:
+
+- **Assert the specific error code**, never just "it rejected". Half of these
+  failures are reachable by two different code paths.
+- **No `Date.now()` in `src/core/`.** The clock is injected, so window logic
+  that is an hour out cannot pass at midday and fail at 23:45.
+- **`resetStore()` in a global `beforeEach`.** Jest's `clearMocks` does not
+  reset module state.
+
+The end-to-end test
+([`src/__tests__/visitLifecycle.e2e.test.ts`](src/__tests__/visitLifecycle.e2e.test.ts))
+is the only one that proves the no-refresh behaviour: it mounts two fake patient
+screens that reload *only* when the store notifies them, drives the whole visit
+through the booth, and asserts the screens updated on their own.
+
+## What I cut
+
+- **Camera QR scanning.** The simulator has a paste field and a "simulate
+  scanning" button instead. A simulator camera cannot see a QR on its own
+  screen, so it would not have been demonstrable anyway.
+- **A signature on the pass** — see above.
+- **Prescriptions, Patient Profile, Digitize, Settings.** The Me menu lists all
+  five items as the reference screens do; only Consultation History works.
+- **The Jano assistant**, which is a placeholder.
+- **Cancelling a booking.** The rule exists and is tested in the state machine,
+  but no screen calls it.
+- **i18n and custom fonts**, to keep the dependency list and the build short.
+
+## What I'd do next
+
+- **Sign the pass server-side** and shorten its life to minutes, consume the
+  one-time id under a database unique constraint, and rotate the displayed code
+  every ~30 seconds so a screenshot is useless.
+- **Carry only the one-time id** in the payload once there is a backend to
+  resolve the rest.
+- **Real slot availability** instead of a hash, and holding a slot while the
+  patient is choosing.
+- **Camera scanning** on a physical device.
+- **Component tests** for the three custom interactions. The logic is covered;
+  the rendering is not.
+- **A booth going into maintenance mid-booking** — the rule is there and
+  tested, but the patient is never told.
