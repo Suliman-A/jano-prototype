@@ -13,8 +13,16 @@ import type {
   VisitStatus,
 } from '@/core/types';
 
-/** How early a patient may check in before their slot starts. */
-export const CHECK_IN_LEAD_MS = 15 * 60 * 1000;
+/**
+ * How early a patient may check in before their slot starts.
+ *
+ * Two hours is generous for a real booth, where fifteen minutes would be
+ * normal. It is deliberate: the prototype has no way to travel in time, so a
+ * tight window would make the flow impossible to demonstrate without waiting
+ * for the slot to come round. The rule itself is unchanged — presenting a pass
+ * outside the window is still refused, and still tested both ways.
+ */
+export const CHECK_IN_LEAD_MS = 2 * 60 * 60 * 1000;
 
 export type VisitEvent =
   | { at: number; boothId: string; type: 'CHECK_IN' }

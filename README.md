@@ -78,7 +78,14 @@ different booth before scanning.
    slots for three days; roughly one in five is marked taken, derived from a
    hash of the slot id so it stays the same across reloads.
 8. **The booth simulator is styled as an operator console**, not as patient UI,
-   so a reviewer is never unsure which side they are looking at.
+   so a reviewer is never unsure which side they are looking at. It starts on
+   the booth the waiting pass was issued for, and warns you when a booth you
+   pick yourself will refuse the scan.
+9. **Check-in opens two hours before the slot**, where a real booth would use
+   about fifteen minutes. The prototype cannot travel in time, so a tight
+   window would make the flow impossible to demonstrate without waiting. The
+   rule is unchanged and still tested from both sides — see
+   `CHECK_IN_LEAD_MS` in [`src/core/visitMachine.ts`](src/core/visitMachine.ts).
 
 ### How the patient app updates without a refresh
 
