@@ -1,20 +1,19 @@
 /**
- * @fileoverview The card that opens in place when a flower is tapped.
- *
- * It shows the latest value, whether that sits in the typical range, the
- * one-line explanation, and the history as a chart.
+ * @fileoverview The card that opens when a flower is tapped, laid out like the
+ * reference screen: the flower's name, the measurement, the latest value with
+ * its range pill and visit date, a one-line explanation, then the history
+ * chart in its own white panel.
  */
 
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { Card } from '@/components/atoms/Card';
 import { Chip } from '@/components/atoms/Chip';
 import { Text } from '@/components/atoms/Text';
 import { type ChartPoint, LineChart } from '@/components/molecules/LineChart';
 import type { Status } from '@/core/rangeStatus';
 import type { MetricSeries } from '@/core/readings';
-import { spacing } from '@/theme';
+import { colors, radii, spacing } from '@/theme';
 
 type FlowerCardProps = {
   series: MetricSeries;
@@ -27,13 +26,12 @@ const STATUS_TEXT: Record<Status, string> = {
   none: 'No typical range',
 };
 
-const STATUS_TONE: Record<Status, 'brand' | 'neutral' | 'success' | 'warning'> =
-  {
-    above: 'warning',
-    below: 'warning',
-    in: 'success',
-    none: 'neutral',
-  };
+const STATUS_TONE: Record<Status, 'neutral' | 'success' | 'warning'> = {
+  above: 'warning',
+  below: 'warning',
+  in: 'success',
+  none: 'neutral',
+};
 
 /**
  * Formats a date like `2026-10-29` as `Oct 29`.
@@ -47,7 +45,7 @@ const toShortDate = (date: string): string =>
   });
 
 /**
- * Reads the headline number out of a reading.
+ * Reads the headline number out of the latest reading.
  * @param series - The metric's series.
  * @returns {string} - The value to display, or a dash.
  */
@@ -87,53 +85,87 @@ export const FlowerCard = ({ series }: FlowerCardProps): React.JSX.Element => {
       }))
     : undefined;
 
+  const year = series.latest
+    ? new Date(`${series.latest.date}T00:00:00`).getFullYear()
+    : undefined;
+
   return (
-    <Animated.View entering={FadeIn.duration(180)}>
-      <Card
-        style={styles.card}
-        testID={`flower-card-${series.metric.key}`}
-        tinted
-      >
+    <Animated.View
+      entering={FadeIn.duration(180)}
+      style={styles.card}
+      testID={`flower-card-${series.metric.key}`}
+    >
+      <View style={styles.header}>
         <Text color="brand" text={series.metric.flower} variant="label" />
-        <Text text={series.metric.label} variant="title" />
+        <Chip text="Sample data" tone="neutral" />
+      </View>
 
-        <View style={styles.headline}>
-          <Text text={headlineValue(series)} variant="hero" />
-          <Text color="muted" text={series.metric.unit} variant="body" />
-          <Chip
-            style={styles.status}
-            text={STATUS_TEXT[series.status]}
-            tone={STATUS_TONE[series.status]}
-          />
-        </View>
+      <Text text={series.metric.label} variant="title" />
 
-        <Text color="muted" text={series.metric.explain} variant="caption" />
-
+      <View style={styles.headline}>
         <Text
-          style={styles.chartTitle}
-          text="Consultation history"
-          variant="label"
+          style={styles.value}
+          text={headlineValue(series)}
+          variant="hero"
         />
-        <LineChart points={points} secondary={secondary} />
-      </Card>
+        <Text color="muted" style={styles.unit} text={series.metric.unit} />
+        <Chip
+          text={STATUS_TEXT[series.status]}
+          tone={STATUS_TONE[series.status]}
+        />
+        {series.latest ? (
+          <Text
+            color="muted"
+            text={`${toShortDate(series.latest.date)} visit`}
+            variant="caption"
+          />
+        ) : null}
+      </View>
+
+      <Text color="muted" text={series.metric.explain} variant="caption" />
+
+      <View style={styles.chartHeader}>
+        <Text text="Consultation history" variant="label" />
+        <Text
+          color="muted"
+          text={year ? String(year) : undefined}
+          variant="caption"
+        />
+      </View>
+
+      <LineChart points={points} secondary={secondary} />
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
+    backgroundColor: colors.brandTint,
+    borderRadius: radii.card,
     gap: spacing.xs,
+    padding: spacing.md,
   },
-  chartTitle: {
-    marginTop: spacing.xs,
+  chartHeader: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.xxs,
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   headline: {
-    alignItems: 'baseline',
+    alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
-  status: {
-    marginLeft: 'auto',
+  unit: {
+    marginLeft: -spacing.xxs,
+  },
+  value: {
+    color: colors.brand,
   },
 });

@@ -1,8 +1,9 @@
 /**
  * @fileoverview The Farm: one flower per health measurement.
  *
- * Tapping a flower opens its card in place in the grid, the way the reference
- * screens show it, rather than pushing a route or opening a sheet.
+ * A plain two-column grid, three rows of two. Tapping a flower opens its card
+ * full width directly beneath that row, the way the reference screen shows it,
+ * rather than pushing a route or opening a sheet.
  */
 
 import { useState } from 'react';
@@ -11,14 +12,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { request } from '@/api/client';
 import { Endpoint } from '@/api/endpoints';
 import { patient } from '@/api/mock/seed';
-import { Text } from '@/components/atoms/Text';
 import { Screen } from '@/components/atoms/Screen';
+import { Text } from '@/components/atoms/Text';
 import { AsyncState } from '@/components/molecules/AsyncState';
 import type { MetricSeries } from '@/core/readings';
 import type { MetricKey } from '@/core/types';
 import { FlowerCard } from '@/features/farm/FlowerCard';
 import { useQueryOnce } from '@/hooks/useQueryOnce';
-import { colors, radii, spacing } from '@/theme';
+import { spacing } from '@/theme';
+
+const COLUMNS = 2;
 
 const FLOWER_EMOJI: Record<MetricKey, string> = {
   blood_pressure: '🌺',
@@ -28,6 +31,21 @@ const FLOWER_EMOJI: Record<MetricKey, string> = {
   temperature: '🌼',
   weight: '🌻',
 };
+
+/**
+ * Splits the metrics into rows of two, so the grid stays square however many
+ * metrics the backend returns.
+ * @param series - Every metric series.
+ * @returns {MetricSeries[][]} - The rows.
+ */
+const toRows = (series: MetricSeries[]): MetricSeries[][] =>
+  series.reduce<MetricSeries[][]>((rows, item, index) => {
+    if (index % COLUMNS === 0) {
+      return [...rows, [item]];
+    }
+
+    return [...rows.slice(0, -1), [...rows[rows.length - 1], item]];
+  }, []);
 
 /**
  * The Farm screen.
@@ -41,6 +59,7 @@ export const FarmScreen = (): React.JSX.Element => {
   );
 
   const series = data ?? [];
+  const rows = toRows(series);
 
   return (
     <Screen testID="farm-screen">
@@ -61,81 +80,77 @@ export const FarmScreen = (): React.JSX.Element => {
         onRetry={refetch}
       />
 
-      <View style={styles.grid}>
-        {series.map((item) => {
-          const isOpen = openKey === item.metric.key;
+      {rows.map((row) => {
+        const openInRow = row.find((item) => item.metric.key === openKey);
 
-          return (
-            <View
-              key={item.metric.key}
-              style={isOpen ? styles.fullWidth : styles.half}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ expanded: isOpen }}
-                onPress={() =>
-                  setOpenKey(isOpen ? null : (item.metric.key as MetricKey))
-                }
-                style={({ pressed }) => [
-                  styles.tile,
-                  isOpen && styles.tileOpen,
-                  pressed && styles.pressed,
-                ]}
-                testID={`flower-${item.metric.key}`}
-              >
-                <Text
-                  style={styles.emoji}
-                  text={FLOWER_EMOJI[item.metric.key]}
-                />
-                <Text text={item.metric.flower} variant="sectionTitle" />
-                <Text
-                  color="muted"
-                  style={styles.centered}
-                  text={item.metric.label}
-                  variant="caption"
-                />
-              </Pressable>
+        return (
+          <View key={row[0].metric.key} style={styles.rowGroup}>
+            <View style={styles.row}>
+              {row.map((item) => (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    expanded: item.metric.key === openKey,
+                  }}
+                  key={item.metric.key}
+                  onPress={() =>
+                    setOpenKey(
+                      item.metric.key === openKey ? null : item.metric.key,
+                    )
+                  }
+                  style={({ pressed }) => [
+                    styles.tile,
+                    pressed && styles.pressed,
+                  ]}
+                  testID={`flower-${item.metric.key}`}
+                >
+                  <Text
+                    style={styles.emoji}
+                    text={FLOWER_EMOJI[item.metric.key]}
+                  />
+                  <Text text={item.metric.flower} variant="sectionTitle" />
+                  <Text
+                    color="muted"
+                    style={styles.centred}
+                    text={item.metric.label}
+                    variant="caption"
+                  />
+                </Pressable>
+              ))}
 
-              {isOpen ? <FlowerCard series={item} /> : null}
+              {row.length < COLUMNS ? <View style={styles.tile} /> : null}
             </View>
-          );
-        })}
-      </View>
+
+            {openInRow ? <FlowerCard series={openInRow} /> : null}
+          </View>
+        );
+      })}
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  centered: {
+  centred: {
     textAlign: 'center',
   },
   emoji: {
-    fontSize: 44,
-    lineHeight: 52,
-  },
-  fullWidth: {
-    gap: spacing.xs,
-    width: '100%',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  half: {
-    flexGrow: 1,
-    flexBasis: '45%',
+    fontSize: 48,
+    lineHeight: 58,
   },
   pressed: {
     opacity: 0.7,
   },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  rowGroup: {
+    gap: spacing.sm,
+  },
   tile: {
     alignItems: 'center',
-    borderRadius: radii.card,
+    flex: 1,
     gap: spacing.xxs,
-    paddingVertical: spacing.md,
-  },
-  tileOpen: {
-    backgroundColor: colors.brandTint,
+    paddingVertical: spacing.sm,
   },
 });

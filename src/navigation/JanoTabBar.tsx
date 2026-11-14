@@ -1,9 +1,10 @@
 /**
- * @fileoverview The custom bottom navigation.
+ * @fileoverview The custom bottom navigation, matching the reference screens.
  *
- * Not a row of equal tabs: Me sits bottom-left, Farm and Temple sit together
- * in the middle with the active one raised and filled, and Jano sits
- * bottom-right. The Jano wordmark sits behind them.
+ * Four circular tabs, not a row of equal ones: Me at the left and Jano at the
+ * right sit a little higher than Farm and Temple in the middle. The active tab
+ * is filled. Farm is permanently the larger circle, so nothing resizes when a
+ * tab is tapped and the row never shifts.
  *
  * Tapping Me does not navigate — it opens the Me menu over the current screen.
  */
@@ -12,9 +13,11 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/atoms/Icon';
+import type { IconName } from '@/components/atoms/iconRegistry';
 import { Text } from '@/components/atoms/Text';
 import { useMeMenu } from '@/navigation/MeMenuContext';
-import { colors, layout, radii, spacing } from '@/theme';
+import { colors, layout, spacing } from '@/theme';
 
 const LABELS: Record<string, string> = {
   FarmTab: 'Farm',
@@ -23,33 +26,36 @@ const LABELS: Record<string, string> = {
   TempleTab: 'Temple',
 };
 
-const ICONS: Record<string, string> = {
-  FarmTab: '🌱',
-  JanoTab: '💬',
-  MeTab: '👤',
-  TempleTab: '🏛',
+const ICONS: Record<string, IconName> = {
+  FarmTab: 'tabFarm',
+  JanoTab: 'tabJano',
+  MeTab: 'tabMe',
+  TempleTab: 'tabTemple',
 };
 
 type TabButtonProps = {
   isActive: boolean;
-  isRaised?: boolean;
+  /** Me and Jano sit a little above the two middle tabs. */
+  isLifted?: boolean;
+  /** Farm is drawn larger than the rest, always. */
+  isLarge?: boolean;
   onPress: () => void;
   routeName: string;
 };
 
 /**
- * One circular tab button.
+ * One circular tab button. The active one grows and lifts.
  * @param props - Which route it is and whether it is active.
  * @returns {React.JSX.Element} - The button.
  */
 const TabButton = ({
   isActive,
-  isRaised = false,
+  isLarge = false,
+  isLifted = false,
   onPress,
   routeName,
 }: TabButtonProps): React.JSX.Element => {
-  const size =
-    isActive && isRaised ? layout.raisedTabSize : layout.tabButtonSize;
+  const size = isLarge ? layout.raisedTabSize : layout.tabButtonSize;
 
   return (
     <Pressable
@@ -61,17 +67,23 @@ const TabButton = ({
         styles.button,
         {
           backgroundColor: isActive ? colors.brand : colors.brandTint,
+          borderRadius: size / 2,
           height: size,
           width: size,
         },
-        isActive && isRaised && styles.raised,
+        isLifted && styles.lifted,
         pressed && styles.pressed,
       ]}
       testID={`tab-${routeName}`}
     >
-      <Text text={ICONS[routeName]} variant="label" />
+      <Icon
+        color={isActive ? 'onBrand' : 'brand'}
+        name={ICONS[routeName]}
+        size={isLarge ? 24 : 21}
+      />
       <Text
         color={isActive ? 'onBrand' : 'ink'}
+        style={styles.label}
         text={LABELS[routeName]}
         variant="tabLabel"
       />
@@ -115,75 +127,76 @@ export const JanoTabBar = ({
     state.routes.map((route) => [route.name, route]),
   );
 
+  const isMeActive = meMenu.isOpen || activeRouteName === 'MeTab';
+
   return (
     <View
       style={[styles.bar, { paddingBottom: insets.bottom || spacing.sm }]}
       testID="jano-tab-bar"
     >
-      <Text color="brand" style={styles.wordmark} text="Jano" variant="title" />
-
-      <TabButton
-        isActive={meMenu.isOpen || activeRouteName === 'MeTab'}
-        onPress={() => meMenu.toggle()}
-        routeName="MeTab"
-      />
-
-      <View style={styles.centre}>
+      <View style={styles.row}>
         <TabButton
-          isActive={!meMenu.isOpen && activeRouteName === 'FarmTab'}
-          isRaised
-          onPress={() => go('FarmTab', routeByName.FarmTab.key)}
-          routeName="FarmTab"
+          isActive={isMeActive}
+          isLifted
+          onPress={() => meMenu.toggle()}
+          routeName="MeTab"
         />
+
+        <View style={styles.centre}>
+          <TabButton
+            isActive={!meMenu.isOpen && activeRouteName === 'FarmTab'}
+            isLarge
+            onPress={() => go('FarmTab', routeByName.FarmTab.key)}
+            routeName="FarmTab"
+          />
+          <TabButton
+            isActive={!meMenu.isOpen && activeRouteName === 'TempleTab'}
+            onPress={() => go('TempleTab', routeByName.TempleTab.key)}
+            routeName="TempleTab"
+          />
+        </View>
+
         <TabButton
-          isActive={!meMenu.isOpen && activeRouteName === 'TempleTab'}
-          isRaised
-          onPress={() => go('TempleTab', routeByName.TempleTab.key)}
-          routeName="TempleTab"
+          isActive={!meMenu.isOpen && activeRouteName === 'JanoTab'}
+          isLifted
+          onPress={() => go('JanoTab', routeByName.JanoTab.key)}
+          routeName="JanoTab"
         />
       </View>
-
-      <TabButton
-        isActive={!meMenu.isOpen && activeRouteName === 'JanoTab'}
-        onPress={() => go('JanoTab', routeByName.JanoTab.key)}
-        routeName="JanoTab"
-      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   bar: {
-    alignItems: 'flex-end',
     backgroundColor: colors.background,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    overflow: 'visible',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xs,
   },
   button: {
     alignItems: 'center',
-    borderRadius: radii.pill,
-    gap: 1,
+    gap: 2,
     justifyContent: 'center',
   },
   centre: {
     alignItems: 'flex-end',
     flexDirection: 'row',
-    gap: spacing.xxs,
+    gap: spacing.xs,
+  },
+  label: {
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.8,
   },
-  raised: {
-    marginBottom: spacing.md,
+  lifted: {
+    // Me and Jano sit a little above the two middle tabs.
+    marginBottom: spacing.xl,
   },
-  wordmark: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    textAlign: 'center',
-    top: spacing.xs,
+  row: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: layout.raisedTabSize + spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
 });
