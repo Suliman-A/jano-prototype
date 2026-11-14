@@ -129,8 +129,14 @@ export const JanoTabBar = ({
       const nested = state.routes[state.index].state;
       const canPop = typeof nested?.index === 'number' && nested.index > 0;
 
-      if (canPop) {
-        navigation.dispatch(StackActions.popToTop());
+      // The action has to be addressed to the nested stack. A tab navigator
+      // cannot handle POP_TO_TOP itself and does not pass it down, so an
+      // unaddressed dispatch is simply dropped with a warning.
+      if (canPop && nested?.key) {
+        navigation.dispatch({
+          ...StackActions.popToTop(),
+          target: nested.key,
+        });
       }
 
       return;
